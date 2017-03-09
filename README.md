@@ -1,6 +1,6 @@
 Performant asynchronous pure PHP Micro Service Transport using plain TCP layer based on ReactPHP.
 
-Library not enough much functional and not recommended for production use. For production use need to provide some much functional like: logging, statistics, debug, unit tests, timeouts, better error handling.
+Library not enough much functional and not recommended for production use. For production use need to provide some much functional like: logging, statistics, debug, unit tests, timeouts, better error handling, client authentication and tls encryption options.
 
 This library provides clients and server:
 
