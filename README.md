@@ -13,4 +13,4 @@ Installation:
 composer require tatikoma/react-mst:dev-master
 ```
 
-For example usage start server.php from example directory and then client-sync.php or/and client-async.php
+For example usage start server.php from examples directory and then client-sync.php or/and client-async.php
