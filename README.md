@@ -4,7 +4,7 @@ Library not enough much functional and not recommended for production use. For p
 
 This library provides clients and server:
 
-Server - listen tcp port, receive connections, fork workers and pass requests to workers. If worker closed connection, then restarts worker.
+Server - listen tcp port, receive connections, fork workers and pass requests to workers. If worker closed connection, then restarts worker. If any error ackuired during request server 'll return empty response.
 
 Client (async promises and sync) - sends request to listening server and returns result.
 
