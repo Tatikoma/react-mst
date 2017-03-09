@@ -14,3 +14,13 @@ composer require tatikoma/react-mst:dev-master
 ```
 
 For example usage start server.php from examples directory and then client-sync.php or/and client-async.php
+```
+~ # cd examples
+~/examples # $ php server.php &
+
+~/examples # $ php client-sync.php 
+Result: 5
+
+~/examples # $ php client-async.php 
+Result: 5
+```
