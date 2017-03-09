@@ -1,0 +1,33 @@
+{
+  "name": "tatikoma/react-mst",
+  "type": "project",
+  "description": "Performant asynchronous pure PHP Micro Service Transport using plain TCP layer based on ReactPHP",
+  "keywords": [
+    "reactphp",
+    "micro service"
+  ],
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Tatikoma"
+    }
+  ],
+  "require": {
+    "evenement/evenement": "^2.0.0",
+    "react/socket": "^0.5",
+    "react/stream": "^0.4",
+    "react/promise": "~2.1|~1.2",
+    "clue/block-react": "^1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Tatikoma\\React\\MicroServiceTransport\\": [
+        "src/tatikoma/react-mst/"
+      ]
+    },
+    "classmap": [
+      "src/tatikoma/react-mst"
+    ]
+  }
+}
