@@ -186,6 +186,7 @@ class Server {
             $property = $reflection->getProperty('master');
             $property->setAccessible(true);
             $this->loop->removeStream($property->getValue($this->socket));
+            $this->socket->removeAllListeners();
 
             foreach($this->connections as $connection){
                 $connection->removeAllListeners();
