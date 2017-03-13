@@ -74,17 +74,22 @@ class Client{
             if(null !== $this->buffer){
                 $this->buffer->close();
             }
-            $socket = @stream_socket_client($this->connectionString, $errno, $errstr, 1, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
+            $socket = stream_socket_client($this->connectionString, $errno, $errstr, 1, STREAM_CLIENT_CONNECT | STREAM_CLIENT_ASYNC_CONNECT);
+
+            $streamErrorHandler = function () {
+                $this->stream->removeAllListeners();
+                $this->stream->close();
+                $this->stream = null;
+                foreach ($this->queue as $sequence => $deferred) {
+                    $deferred->reject(new \RuntimeException('Connection closed during request..'));
+                }
+                $this->getStream();
+            };
+
             $this->stream = new \React\Stream\Stream($socket, $this->loop);
-            $this->stream->on('end', function(){
-                unset($this->stream);
-            });
-            $this->stream->on('close', function(){
-                unset($this->stream);
-            });
-            $this->stream->on('error', function(){
-                unset($this->stream);
-            });
+            $this->stream->on('end', $streamErrorHandler);
+            $this->stream->on('close', $streamErrorHandler);
+            $this->stream->on('error', $streamErrorHandler);
             $this->buffer = new \Tatikoma\React\MicroServiceTransport\Buffer($this->stream);
             $this->buffer->on('packet', function($payload){
                 $header = \Tatikoma\React\MicroServiceTransport\Common::readHeader($payload);
