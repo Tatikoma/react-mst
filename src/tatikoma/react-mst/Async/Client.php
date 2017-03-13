@@ -78,11 +78,11 @@ class Client{
             $streamErrorHandler = function () {
                 $this->stream->removeAllListeners();
                 $this->stream->close();
+
                 $this->stream = null;
                 foreach ($this->queue as $sequence => $deferred) {
                     $deferred->reject(new \RuntimeException('Connection closed during request..'));
                 }
-                $this->getStream();
             };
 
             $this->stream = new \React\Stream\Stream($socket, $this->loop);

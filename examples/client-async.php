@@ -10,7 +10,7 @@ $client->request('Hello')->then(function($result){
     print $result . PHP_EOL;
 })->otherwise(function(){
     print 'Request failed' . PHP_EOL;
-})->then(function () use ($client) {
+})->done(function () use ($client) {
     $client->close();
 });
 
