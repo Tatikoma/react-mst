@@ -25,6 +25,10 @@ class Client{
      * @var \React\Promise\Deferred[]
      */
     protected $queue = [];
+    /**
+     * @var int Number of maximum asynchronous requests
+     */
+    protected $asyncWindowSize = 0xFF;
 
     public function __construct(\React\EventLoop\LoopInterface $loop, array $options = [])
     {
@@ -32,16 +36,24 @@ class Client{
         if(!isset($options['connectionString'])){
             throw new \InvalidArgumentException('Cannot start client without connectionString argument');
         }
+        if (isset($options['asyncWindowSize'])) {
+            $this->asyncWindowSize = $options['asyncWindowSize'];
+        }
         $this->connectionString = $options['connectionString'];
     }
 
     /**
      * @param string $payload
      * @param int $factor locking/sharding key
-     * @return \React\Promise\Promise
+     * @return \React\Promise\Promise|\React\Promise\PromiseInterface
      * @throws \Exception
      */
     public function request($payload, $factor = 0){
+        if ($this->asyncWindowSize > 0 && count($this->queue) >= $this->asyncWindowSize) {
+            \Clue\React\Block\await(\React\Promise\any(array_map(function (\React\Promise\Deferred $item) {
+                return $item->promise();
+            }, $this->queue)), $this->loop);
+        }
         $deferred = new \React\Promise\Deferred();
         $sequence = $this->getNextSequence();
         $this->queue[$sequence] = $deferred;
