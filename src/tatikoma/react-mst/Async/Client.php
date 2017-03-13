@@ -95,7 +95,11 @@ class Client{
                 if(!isset($this->queue[$header['sequence']])){
                     throw new \LogicException('Received unknown sequence');
                 }
-                $this->queue[$header['sequence']]->resolve($header['data']);
+                if ($header['data'] === '') {
+                    $this->queue[$header['sequence']]->reject();
+                } else {
+                    $this->queue[$header['sequence']]->resolve($header['data']);
+                }
                 unset($this->queue[$header['sequence']]);
             });
         }
