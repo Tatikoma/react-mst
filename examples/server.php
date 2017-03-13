@@ -4,9 +4,10 @@ class TestService implements \Tatikoma\React\MicroServiceTransport\ServiceInterf
 
     /**
      * @param string $request request data
+     * @param array $header
      * @return \React\Promise\Promise
      */
-    public function processRequest($request)
+    public function processRequest($request, array $header)
     {
         return \React\Promise\resolve('Result: ' . strlen($request));
     }

@@ -85,20 +85,28 @@ class Server {
             $this->connections[$connectionId] = new Buffer($connection);
 
             $this->connections[$connectionId]->on('packet', function($packet) use($connectionId){
-                do {
-                    $workerId = $this->lastActiveWorker++;
-                    if($workerId >= count($this->workers)){
-                        $workerId = 0;
-                    }
+                $header = Common::readHeader($packet);
+                $header['connection'] = $connectionId;
+
+                if($header['factor'] === 0) {
+                    // no factor set, do round-robin
+                    do {
+                        $workerId = $this->lastActiveWorker++;
+                        if ($workerId >= count($this->workers)) {
+                            $this->lastActiveWorker = 0;
+                        }
+                    } while (!isset($this->workers[$workerId]));
                 }
-                while(!isset($this->workers[$workerId]));
-                $header = unpack('Nlength/Nsequence', substr($packet, 0, 8));
-                $this->queue[$workerId][pack('NN', $header['sequence'], $connectionId)] = 1;
+                else{
+                    // use factor to select worker
+                    $workerId = $header['factor'] % $this->no_workers;
+                }
+
+                $packetId = Common::getPacketId($header['sequence'], $connectionId);
+
+                $this->queue[$workerId][$packetId] = 1;
                 $this->workers[$workerId]->connection->write(
-                    pack('N', $header['length'] + 4)
-                    . pack('N', $header['sequence'])
-                    . pack('N', $connectionId)
-                    . substr($packet, 8)
+                    Common::writeHeader($header['data'], $header)
                 );
             });
 
@@ -154,8 +162,10 @@ class Server {
         if($pid === -1){
             throw new \RuntimeException('Cannot fork');
         }
-        $worker = new Worker($this->loop);
-        $worker->id = $workerId;
+        $worker = new Worker($this->loop, [
+            'id' => $workerId,
+        ]);
+        //$worker->id = $workerId;
         if($pid > 0){
             // parent
             fclose($pair[0]);
@@ -193,9 +203,9 @@ class Server {
                 $this->loop->removeStream($connection->connection->stream);
             }
 
-            foreach($this->workers as $worker){
-                $worker->connection->removeAllListeners();
-                $this->loop->removeStream($worker->connection->stream);
+            foreach($this->workers as $workerOne){
+                $workerOne->connection->removeAllListeners();
+                $this->loop->removeStream($workerOne->connection->stream);
             }
 
             $worker->pid = getmypid();
@@ -212,15 +222,14 @@ class Server {
      * @param string $packet
      */
     protected function processWorkerData($workerId, $packet){
-        $header = unpack('Nlength/Nsequence/Nconnection', substr($packet, 0, 12));
+        $header = Common::readHeader($packet);
         if(isset($this->connections[$header['connection']])){
-            $key = pack('NN', $header['sequence'], $header['connection']);
-            if(isset($this->queue[$workerId][$key])){
-                unset($this->queue[$workerId][$key]);
+            $packetId = Common::getPacketId($header['sequence'], $header['connection']);
+            if(isset($this->queue[$workerId][$packetId])){
+                unset($this->queue[$workerId][$packetId]);
             }
             $this->connections[$header['connection']]->connection->write(
-                $res = pack('NN', $header['length'] -4, $header['sequence'])
-                . substr($packet, 12)
+                Common::writeHeader($header['data'], $header)
             );
         }
     }
@@ -235,11 +244,11 @@ class Server {
         $this->workers[$workerId]->connection->close();
         posix_kill($this->workers[$workerId]->pid, SIGTERM);
         unset($this->workers[$workerId]);
-        foreach($this->queue[$workerId] as $connectionInfo => $null){
-            $header = unpack('Nsequence/Nconnection', $connectionInfo);
+        foreach($this->queue[$workerId] as $packetId => $null){
+            $header = Common::parsePacketId($packetId);
             if(isset($this->connections[$header['connection']])){
                 $this->connections[$header['connection']]->connection->write(
-                    pack('NN', 12, $header['sequence'])
+                    Common::writeHeader('', $header)
                 );
             }
         }

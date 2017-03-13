@@ -36,15 +36,21 @@ class Client{
     }
 
     /**
-     * @param $payload
+     * @param string $payload
+     * @param int $factor locking/sharding key
      * @return \React\Promise\Promise
      * @throws \Exception
      */
-    public function request($payload){
+    public function request($payload, $factor = 0){
         $deferred = new \React\Promise\Deferred();
         $sequence = $this->getNextSequence();
         $this->queue[$sequence] = $deferred;
-        $this->getStream()->write(pack('NN', strlen($payload) + 8, $sequence) . $payload);
+        $this->getStream()->write(
+            \Tatikoma\React\MicroServiceTransport\Common::writeHeader($payload, [
+                'sequence' => $sequence,
+                'factor' => $factor,
+            ])
+        );
         return $deferred->promise();
     }
 
@@ -83,16 +89,11 @@ class Client{
             });
             $this->buffer = new \Tatikoma\React\MicroServiceTransport\Buffer($this->stream);
             $this->buffer->on('packet', function($payload){
-                $header = unpack('Nlength/Nsequence', substr($payload, 0, 8));
+                $header = \Tatikoma\React\MicroServiceTransport\Common::readHeader($payload);
                 if(!isset($this->queue[$header['sequence']])){
                     throw new \LogicException('Received unknown sequence');
                 }
-                if($header['length'] === 8){
-                    $this->queue[$header['sequence']]->reject();
-                }
-                else{
-                    $this->queue[$header['sequence']]->resolve(substr($payload, 8));
-                }
+                $this->queue[$header['sequence']]->resolve($header['data']);
                 unset($this->queue[$header['sequence']]);
             });
         }

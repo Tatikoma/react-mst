@@ -2,10 +2,11 @@
 namespace Tatikoma\React\MicroServiceTransport;
 interface ServiceInterface{
     /**
-     * @param $request
+     * @param string $request
+     * @param array $header
      * @return \React\Promise\Promise
      */
-    public function processRequest($request);
+    public function processRequest($request, array $header);
 
     /**
      * @return mixed

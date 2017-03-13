@@ -5,6 +5,7 @@ class Worker{
      * @var int sequential worker id
      */
     public $id;
+
     /**
      * @var int worker process id
      */
@@ -30,9 +31,12 @@ class Worker{
      * Worker constructor.
      * @param \React\EventLoop\LoopInterface $loop
      */
-    public function __construct(\React\EventLoop\LoopInterface $loop)
+    public function __construct(\React\EventLoop\LoopInterface $loop, array $options = [])
     {
         $this->loop = $loop;
+        if(isset($options['id'])){
+            $this->id = $options['id'];
+        }
     }
 
     /**
@@ -43,15 +47,16 @@ class Worker{
 
         $this->buffer = new Buffer($this->connection);
         $this->buffer->on('packet', function($packet){
-            $header = unpack('Nlength/Nsequence/Nconnection', substr($packet, 0, 12));
-            $payload = substr($packet, 12);
-            $this->service->processRequest($payload)->then(function($payload) use($header){
-                $this->connection->write($pck  =
-                    pack('NNN', strlen($payload) + 12, $header['sequence'], $header['connection'])
-                    . $payload
+            $header = Common::readHeader($packet);
+
+            $this->service->processRequest($header['data'], $header)->then(function($payload) use($header){
+                $this->connection->write(
+                    Common::writeHeader($payload, $header)
                 );
             })->otherwise(function() use($header){
-                $this->connection->write(pack('NNN', 12, $header['sequence'], $header['connection']));
+                $this->connection->write(
+                    Common::writeHeader('', $header)
+                );
             });
         });
 

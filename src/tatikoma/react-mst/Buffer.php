@@ -34,19 +34,21 @@ class Buffer{
      * Parse data in buffer
      */
     public function parseBuffer(){
-        if(strlen($this->buffer) < 4) {
+        if(strlen($this->buffer) < Common::HEADER_LENGTH) {
             return;
         }
-        $packetSize = unpack('Nsize', substr($this->buffer, 0, 4))['size'];
+        $packetSize = Common::readLength($this->buffer);
         while(strlen($this->buffer) >= $packetSize){
+
             $packet = substr($this->buffer, 0, $packetSize);
             $this->buffer = substr($this->buffer, $packetSize);
+
             $this->emit('packet', [$packet]);
 
-            if(strlen($this->buffer) < 4){
+            if(strlen($this->buffer) < Common::HEADER_LENGTH){
                 break;
             }
-            $packetSize = unpack('Nsize', substr($this->buffer, 0, 4))['size'];
+            $packetSize = Common::readLength($this->buffer);
         }
     }
 }

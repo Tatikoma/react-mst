@@ -17,11 +17,12 @@ class Client{
     }
 
     /**
-     * @param $payload
+     * @param string $payload
+     * @param int $factor locking/sharding key
      * @return string
      * @throws \Exception
      */
-    public function request($payload){
-        return \Clue\React\Block\await($this->client->request($payload), $this->loop);
+    public function request($payload, $factor = 0){
+        return \Clue\React\Block\await($this->client->request($payload, $factor), $this->loop);
     }
 }
