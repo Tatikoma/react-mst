@@ -69,6 +69,7 @@ class Client{
      * @throws \Exception
      */
     protected function getStream(){
+        // @todo rewrite it without recursion
         if(null === $this->stream || !$this->stream->isWritable()){
             if(null !== $this->buffer){
                 $this->buffer->close();
@@ -77,15 +78,12 @@ class Client{
             $this->stream = new \React\Stream\Stream($socket, $this->loop);
             $this->stream->on('end', function(){
                 unset($this->stream);
-                return $this->getStream();
             });
             $this->stream->on('close', function(){
                 unset($this->stream);
-                return $this->getStream();
             });
             $this->stream->on('error', function(){
                 unset($this->stream);
-                return $this->getStream();
             });
             $this->buffer = new \Tatikoma\React\MicroServiceTransport\Buffer($this->stream);
             $this->buffer->on('packet', function($payload){
@@ -98,5 +96,12 @@ class Client{
             });
         }
         return $this->stream;
+    }
+
+    public function close()
+    {
+        if ($this->stream instanceof \React\Stream\Stream) {
+            $this->stream->close();
+        }
     }
 }
