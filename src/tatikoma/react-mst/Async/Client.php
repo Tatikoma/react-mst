@@ -69,7 +69,6 @@ class Client{
      * @throws \Exception
      */
     protected function getStream(){
-        // @todo rewrite it without recursion
         if(null === $this->stream || !$this->stream->isWritable()){
             if(null !== $this->buffer){
                 $this->buffer->close();
