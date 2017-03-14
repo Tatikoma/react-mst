@@ -43,7 +43,7 @@ class Worker{
      * Run worker
      */
     public function run(){
-        $this->service->init();
+        $this->service->init($this->loop);
 
         $this->buffer = new Buffer($this->connection);
         $this->buffer->on('packet', function($packet){

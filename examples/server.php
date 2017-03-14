@@ -1,6 +1,17 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 class TestService implements \Tatikoma\React\MicroServiceTransport\ServiceInterface {
+    protected $loop;
+
+    /**
+     * Initialize service
+     * @param \React\EventLoop\LoopInterface $loop
+     * @return mixed|void
+     */
+    public function init(\React\EventLoop\LoopInterface $loop)
+    {
+        $this->loop = $loop;
+    }
 
     /**
      * @param string $request request data
@@ -10,14 +21,6 @@ class TestService implements \Tatikoma\React\MicroServiceTransport\ServiceInterf
     public function processRequest($request, array $header)
     {
         return \React\Promise\resolve('Result: ' . strlen($request));
-    }
-
-    /**
-     * Initialize service
-     */
-    public function init()
-    {
-        // do some initial things, like connection to database
     }
 }
 
