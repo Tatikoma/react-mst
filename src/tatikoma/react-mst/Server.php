@@ -165,7 +165,7 @@ class Server {
         $worker = new Worker($this->loop, [
             'id' => $workerId,
         ]);
-        //$worker->id = $workerId;
+        $worker->id = $workerId;
         if($pid > 0){
             // parent
             fclose($pair[0]);
