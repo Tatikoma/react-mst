@@ -174,7 +174,8 @@ class Server {
             $worker->connection = new \React\Stream\Stream($pair[1], $this->loop);
             $this->workers[$workerId] = $worker;
 
-            $worker->connection->on('data', function($data) use($workerId){
+            $buffer = new Buffer($worker->connection);
+            $buffer->on('packet', function ($data) use ($workerId) {
                 $this->processWorkerData($workerId, $data);
             });
             $worker->connection->on('end', function() use($workerId){
