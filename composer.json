@@ -16,7 +16,7 @@
   "require": {
     "php": ">=7.0",
     "evenement/evenement": "^2.0.0",
-    "react/socket": "^0.5",
+    "react/socket": "^0.5|^0.4",
     "react/stream": "^0.4",
     "react/promise": "~2.1|~1.2",
     "clue/block-react": "^1.1"
