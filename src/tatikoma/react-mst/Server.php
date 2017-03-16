@@ -51,6 +51,10 @@ class Server {
      * @var \React\EventLoop\Timer\TimerInterface
      */
     protected $signalDispatchInterval;
+    /**
+     * @var bool if process is master
+     */
+    protected $isMaster = true;
 
     /**
      * Server constructor.
@@ -74,12 +78,14 @@ class Server {
         $this->loop = $loop;
 
         $sigHandler = function () {
-            foreach ($this->childs as $pid) {
-                posix_kill($pid, SIGTERM);
+            if ($this->isMaster) {
+                foreach ($this->childs as $pid) {
+                    posix_kill($pid, SIGTERM);
+                }
+                do {
+                    $pid = pcntl_wait($status);
+                } while ($pid > -1);
             }
-            do {
-                $pid = pcntl_wait($status);
-            } while ($pid > -1);
             exit;
         };
         pcntl_signal(SIGTERM, $sigHandler);
@@ -211,6 +217,7 @@ class Server {
         else{
             // child
             fclose($pair[1]);
+            $this->isMaster = false;
 
             // remove master socket events
             $reflection = new \ReflectionClass($this->socket);
@@ -218,8 +225,6 @@ class Server {
             $property->setAccessible(true);
             $this->loop->removeStream($property->getValue($this->socket));
             $this->socket->removeAllListeners();
-
-            $this->signalDispatchInterval->cancel();
 
             foreach($this->connections as $connection){
                 $connection->removeAllListeners();
