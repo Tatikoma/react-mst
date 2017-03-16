@@ -47,6 +47,10 @@ class Server {
      * @var int
      */
     public $lastActiveWorker = 0;
+    /**
+     * @var \React\EventLoop\Timer\TimerInterface
+     */
+    protected $signalDispatchInterval;
 
     /**
      * Server constructor.
@@ -68,6 +72,22 @@ class Server {
         $this->service = $options['service'];
 
         $this->loop = $loop;
+
+        $sigHandler = function () {
+            foreach ($this->childs as $pid) {
+                posix_kill($pid, SIGTERM);
+            }
+            do {
+                $pid = pcntl_wait($status);
+            } while ($pid > -1);
+            exit;
+        };
+        pcntl_signal(SIGTERM, $sigHandler);
+        pcntl_signal(SIGHUP, $sigHandler);
+        pcntl_signal(SIGINT, $sigHandler);
+        $this->signalDispatchInterval = $this->loop->addPeriodicTimer(1, function () {
+            pcntl_signal_dispatch();
+        });
     }
 
     /**
@@ -198,6 +218,8 @@ class Server {
             $property->setAccessible(true);
             $this->loop->removeStream($property->getValue($this->socket));
             $this->socket->removeAllListeners();
+
+            $this->signalDispatchInterval->cancel();
 
             foreach($this->connections as $connection){
                 $connection->removeAllListeners();
