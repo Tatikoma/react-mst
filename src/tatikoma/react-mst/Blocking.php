@@ -1,19 +1,21 @@
 <?php
 
 namespace Tatikoma\React\MicroServiceTransport;
-class Client{
+class Blocking
+{
     /**
      * @var \React\EventLoop\LoopInterface
      */
     protected $loop;
     /**
-     * @var \Tatikoma\React\MicroServiceTransport\Async\Client
+     * @var \Tatikoma\React\MicroServiceTransport\Async\Client|\Tatikoma\React\MicroServiceTransport\Async\Failover
      */
     protected $client;
-    public function __construct($options)
+
+    public function __construct(\React\EventLoop\LoopInterface $loop, $client)
     {
-        $this->loop = \React\EventLoop\Factory::create();
-        $this->client = new \Tatikoma\React\MicroServiceTransport\Async\Client($this->loop, $options);
+        $this->loop = $loop;
+        $this->client = $client;
     }
 
     /**

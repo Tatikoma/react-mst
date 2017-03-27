@@ -2,8 +2,10 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 $loop = \React\EventLoop\Factory::create();
 
-$client = new \Tatikoma\React\MicroServiceTransport\Async\Client($loop, [
+$client = \Tatikoma\React\MicroServiceTransport\Factory::AsyncFailover($loop, [
     'connectionString' => '127.0.0.1:9009',
+    'retry_count' => 3,
+    'retry_interval' => 1,
 ]);
 
 $client->request('Hello')->then(function($result){

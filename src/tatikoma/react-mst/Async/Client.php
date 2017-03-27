@@ -30,6 +30,12 @@ class Client{
      */
     protected $asyncWindowSize = 0xFF;
 
+    /**
+     * Client constructor.
+     * @param \React\EventLoop\LoopInterface $loop
+     * @param array $options
+     * @throws \Exception
+     */
     public function __construct(\React\EventLoop\LoopInterface $loop, array $options = [])
     {
         $this->loop = $loop;
@@ -118,6 +124,9 @@ class Client{
         return $this->stream;
     }
 
+    /**
+     * Close client
+     */
     public function close()
     {
         if ($this->stream instanceof \React\Stream\Stream) {
