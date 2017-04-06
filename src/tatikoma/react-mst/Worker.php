@@ -26,6 +26,10 @@ class Worker{
      * @var ServiceInterface
      */
     public $service;
+    /**
+     * @var int number of running tasks
+     */
+    public $runningTasks = 0;
 
     /**
      * Worker constructor.

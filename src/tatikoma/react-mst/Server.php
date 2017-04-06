@@ -115,13 +115,23 @@ class Server {
                 $header['connection'] = $connectionId;
 
                 if($header['factor'] === 0) {
-                    // no factor set, do round-robin
-                    do {
+                    // no factor set, use most free worker
+                    /* // old trash, aka round-robin
+                     * do {
                         $workerId = $this->lastActiveWorker++;
                         if ($workerId >= count($this->workers)) {
                             $this->lastActiveWorker = 0;
                         }
-                    } while (!isset($this->workers[$workerId]));
+                    } while (!isset($this->workers[$workerId]));*/
+                    $lowestTasks = -1;
+                    $targetWorkerId = -1;
+                    foreach ($this->workers as $workerId => $worker) {
+                        if ($worker->runningTasks < $lowestTasks || $lowestTasks === -1) {
+                            $targetWorkerId = $workerId;
+                            $lowestTasks = $worker->runningTasks;
+                        }
+                    }
+                    $workerId = $targetWorkerId;
                 }
                 else{
                     // use factor to select worker
@@ -131,6 +141,7 @@ class Server {
                 $packetId = Common::getPacketId($header['sequence'], $connectionId);
 
                 $this->queue[$workerId][$packetId] = 1;
+                $this->workers[$workerId]->runningTasks++;
                 $this->workers[$workerId]->connection->write(
                     Common::writeHeader($header['data'], $header)
                 );
@@ -256,6 +267,7 @@ class Server {
             if(isset($this->queue[$workerId][$packetId])){
                 unset($this->queue[$workerId][$packetId]);
             }
+            $this->workers[$workerId]->runningTasks--;
             $this->connections[$header['connection']]->connection->write(
                 Common::writeHeader($header['data'], $header)
             );
