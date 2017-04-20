@@ -101,7 +101,19 @@ class Server {
      * @throws \Exception
      */
     public function run(){
-        $this->socket = new \React\Socket\Server($this->listen, $this->loop);
+        $class = new \ReflectionClass(\React\Socket\Server::class);
+        $constructor = $class->getConstructor();
+        if ($constructor->getNumberOfParameters() === 1) {
+            // old constructor support
+            /** @noinspection PhpParamsInspection */
+            $this->socket = new \React\Socket\Server($this->loop);
+            list($host, $port) = explode(':', $this->listen);
+            $this->socket->listen($port, $host);
+
+        } else {
+            /** @noinspection PhpParamsInspection */
+            $this->socket = new \React\Socket\Server($this->listen, $this->loop);
+        }
 
         $this->socket->on('error', function(){
             throw new \RuntimeException('Got error on master socket');
